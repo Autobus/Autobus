@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Threading.Tasks;
 
-namespace SlimBus
+namespace SlimBus.Models
 {
     public record ServiceInterfaceModel(
         IReadOnlyList<ServiceInterfaceModel.Request> Requests,

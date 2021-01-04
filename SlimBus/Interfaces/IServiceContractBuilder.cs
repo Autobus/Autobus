@@ -1,4 +1,5 @@
 using System;
+using SlimBus.Abstractions;
 
 namespace SlimBus.Interfaces
 {
@@ -21,5 +22,7 @@ namespace SlimBus.Interfaces
         IServiceContractBuilder AddEvent(Type eventType);
 
         IServiceContractBuilder AddEvent<T>() => AddEvent(typeof(T));
+
+        IServiceContract Build();
     }
 }
