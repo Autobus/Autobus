@@ -1,7 +1,7 @@
 using System;
 using SlimBus.Abstractions;
 
-namespace SlimBus.Interfaces
+namespace SlimBus
 {
     public interface IServiceContractBuilder
     {

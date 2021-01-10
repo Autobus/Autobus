@@ -1,10 +1,20 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <OutputType>Library</OutputType>
-        <LangVersion>9</LangVersion>
-        <TargetFramework>net5.0</TargetFramework>
-        <Nullable>enable</Nullable>
-    </PropertyGroup>
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <LangVersion>9</LangVersion>
+    <TargetFramework>net5.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PackageId>SlimBus</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Chandler Stowell</Authors>
+    <PackageDescription>SlimBus</PackageDescription>
+    <RepositoryUrl>https://github.com/SlimBus/SlimBus.git</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/SlimBus/SlimBus</PackageProjectUrl>
+    <PackageTags></PackageTags>
+    <PackageLicenseUrl>https://github.com/SlimBus/SlimBus/blob/main/LICENSE</PackageLicenseUrl>
+    <copyright>Copyright 2021</copyright>
+  </PropertyGroup>
 
 </Project>

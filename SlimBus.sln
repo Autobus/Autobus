@@ -1,8 +1,19 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SlimBus", "SlimBus\SlimBus.csproj", "{DBC6225B-C559-4321-896A-D5DA95F72157}"
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30804.86
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SlimBus", "SlimBus\SlimBus.csproj", "{DBC6225B-C559-4321-896A-D5DA95F72157}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleTest", "ConsoleTest\ConsoleTest.csproj", "{E728A77B-A241-4FB4-8E15-873D65590224}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SlimBus.Serialization.BinaryRecords", "SlimBus.Serialization.BinaryRecords\SlimBus.Serialization.BinaryRecords.csproj", "{BEB9C699-7FFA-49E9-BCF3-586F33EFD8E3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SlimBus.Transports.RabbitMQ", "SlimBus.Transports.RabbitMQ\SlimBus.Transports.RabbitMQ.csproj", "{29DE8D78-57B1-4394-B6A8-5CD2FF36F819}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestServices", "TestServices\TestServices.csproj", "{C07BE4AB-B7A7-4649-87EC-56BA52B1E4FF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SlimBus.Extensions.Hosting", "SlimBus.Extensions.Hosting\SlimBus.Extensions.Hosting.csproj", "{30DB540A-6E68-4416-BC62-12C36F09CF98}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestServices2", "TestServices2\TestServices2.csproj", "{8CFA1E93-BE24-4C18-A143-76575F7E6A27}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -14,9 +25,31 @@ Global
 		{DBC6225B-C559-4321-896A-D5DA95F72157}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DBC6225B-C559-4321-896A-D5DA95F72157}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DBC6225B-C559-4321-896A-D5DA95F72157}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E728A77B-A241-4FB4-8E15-873D65590224}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E728A77B-A241-4FB4-8E15-873D65590224}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E728A77B-A241-4FB4-8E15-873D65590224}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E728A77B-A241-4FB4-8E15-873D65590224}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BEB9C699-7FFA-49E9-BCF3-586F33EFD8E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BEB9C699-7FFA-49E9-BCF3-586F33EFD8E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BEB9C699-7FFA-49E9-BCF3-586F33EFD8E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BEB9C699-7FFA-49E9-BCF3-586F33EFD8E3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{29DE8D78-57B1-4394-B6A8-5CD2FF36F819}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{29DE8D78-57B1-4394-B6A8-5CD2FF36F819}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{29DE8D78-57B1-4394-B6A8-5CD2FF36F819}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{29DE8D78-57B1-4394-B6A8-5CD2FF36F819}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C07BE4AB-B7A7-4649-87EC-56BA52B1E4FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C07BE4AB-B7A7-4649-87EC-56BA52B1E4FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C07BE4AB-B7A7-4649-87EC-56BA52B1E4FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C07BE4AB-B7A7-4649-87EC-56BA52B1E4FF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{30DB540A-6E68-4416-BC62-12C36F09CF98}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{30DB540A-6E68-4416-BC62-12C36F09CF98}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{30DB540A-6E68-4416-BC62-12C36F09CF98}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{30DB540A-6E68-4416-BC62-12C36F09CF98}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8CFA1E93-BE24-4C18-A143-76575F7E6A27}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8CFA1E93-BE24-4C18-A143-76575F7E6A27}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8CFA1E93-BE24-4C18-A143-76575F7E6A27}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8CFA1E93-BE24-4C18-A143-76575F7E6A27}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {93BFD4E3-7FAC-4B31-B7A1-1DA86A12D794}
 	EndGlobalSection
 EndGlobal

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 namespace SlimBus.Models
 {
     public record ServiceInterfaceModel(
+        Type Interface,
         IReadOnlyList<ServiceInterfaceModel.Request> Requests,
         IReadOnlyList<ServiceInterfaceModel.Command> Commands,
         IReadOnlyList<ServiceInterfaceModel.EventHandler> EventHandlers)
@@ -36,15 +37,14 @@ namespace SlimBus.Models
             if (responseType.IsGenericType)
             {
                 var genericTypeDefinition = responseType.GetGenericTypeDefinition();
-                if (!(genericTypeDefinition == typeof(Task<>) ||
-                      genericTypeDefinition == typeof(ValueTask<>)))
+                if (genericTypeDefinition != typeof(Task<>))
                     return null;
 
                 var genericArguments = genericTypeDefinition.GetGenericArguments();
                 if (genericArguments.Length != 1)
                     return null;
 
-                responseType = genericArguments[0];
+                responseType = responseType.GetGenericArguments()[0];
             }
 
             return (requestType, responseType);
@@ -55,10 +55,10 @@ namespace SlimBus.Models
             if (methodInfo.IsGenericMethod)
                 return null;
             var returnType = methodInfo.ReturnType;
-            if (!(returnType == null || returnType == typeof(Task) || returnType == typeof(ValueTask)))
+            if (returnType != typeof(Task))
                 return null;
             var methodParameters = methodInfo.GetParameters();
-            return methodParameters.Length != 0 ? null : methodParameters[0].ParameterType;
+            return methodParameters.Length != 1 ? null : methodParameters[0].ParameterType;
         }
         
         public static ServiceInterfaceModel FromInterface(Type interfaceType)
@@ -91,11 +91,11 @@ namespace SlimBus.Models
                 if (requestTypes != null)
                 {
                     var values = requestTypes.Value;
-                    requests.Add(new(values.RequestType, values.ResponseType, methodInfo));
+                    requests.Add(new (values.RequestType, values.ResponseType, methodInfo));
                 }
             }
 
-            return new (requests, commands, eventHandlers);
+            return new (interfaceType, requests, commands, eventHandlers);
         }
         
         public static ServiceInterfaceModel FromInterface<T>() => FromInterface(typeof(T));

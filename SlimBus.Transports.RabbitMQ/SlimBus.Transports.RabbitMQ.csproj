@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <PackageId>SlimBus.Transports.RabbitMQ</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Chandler Stowell</Authors>
+    <PackageDescription>SlimBus RabbitMQ Transport</PackageDescription>
+    <RepositoryUrl>https://github.com/SlimBus/SlimBus.git</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/SlimBus/SlimBus</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/SlimBus/SlimBus/blob/main/LICENSE</PackageLicenseUrl>
+    <copyright>Copyright 2021</copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="RabbitMQ.Client" Version="6.2.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SlimBus\SlimBus.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>

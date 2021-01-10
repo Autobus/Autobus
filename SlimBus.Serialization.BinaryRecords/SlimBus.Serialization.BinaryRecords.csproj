@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <LangVersion>9</LangVersion>
+    <TargetFramework>net5.0</TargetFramework>
+    <PackageId>SlimBus.Serialization.BinaryRecords</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Chandler Stowell</Authors>
+    <PackageDescription>SlimBus BinaryRecords Serialization</PackageDescription>
+    <RepositoryUrl>https://github.com/SlimBus/SlimBus.git</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/SlimBus/SlimBus</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/SlimBus/SlimBus/blob/main/LICENSE</PackageLicenseUrl>
+    <copyright>Copyright 2021</copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BinaryRecords" Version="0.1.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SlimBus\SlimBus.csproj" />
+  </ItemGroup>
+
+</Project>

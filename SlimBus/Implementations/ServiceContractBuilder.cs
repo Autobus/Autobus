@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using SlimBus.Abstractions;
 using SlimBus.Enums;
-using SlimBus.Interfaces;
+using SlimBus.Abstractions;
 using SlimBus.Models;
 
 namespace SlimBus.Implementations
@@ -39,7 +39,7 @@ namespace SlimBus.Implementations
             if (!_handledMessageTypes.Add(responseType))
                 throw new Exception($"Ambiguous use of {responseType.FullName} message.");
             var requestContract = new MessageModel(requestType, MessageBehavior.Request);
-            var responseContract = new MessageModel(requestType, MessageBehavior.Response);
+            var responseContract = new MessageModel(responseType, MessageBehavior.Response);
             _requests[requestContract.Type] = responseContract.Type;
             _messages.Add(requestContract);
             _messages.Add(responseContract);
@@ -76,6 +76,7 @@ namespace SlimBus.Implementations
                     AddCommand(command.CommandType);
                 foreach (var requestResponse in interfaceModel.Requests)
                     AddRequest(requestResponse.RequestType, requestResponse.ResponseType);
+                interfaceModels.Add(interfaceModel);
             }
             contract.Name = _name;
             contract.Interfaces = interfaceModels;

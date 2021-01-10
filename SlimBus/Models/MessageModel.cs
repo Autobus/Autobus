@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using SlimBus.Enums;
-using SlimBus.Interfaces;
+using SlimBus.Abstractions;
 
 namespace SlimBus
 {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using SlimBus.Models;
 
-namespace SlimBus.Interfaces
+namespace SlimBus.Abstractions
 {
     public interface IServiceContract
     {

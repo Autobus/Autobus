@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using SlimBus.Interfaces;
+using SlimBus.Abstractions;
 using SlimBus.Models;
 
-namespace SlimBus.Abstractions
+namespace SlimBus
 {
     public abstract class BaseServiceContract : IServiceContract
     {
