@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.30804.86
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SlimBus", "SlimBus\SlimBus.csproj", "{DBC6225B-C559-4321-896A-D5DA95F72157}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SlimBus.Serialization.BinaryRecords", "SlimBus.Serialization.BinaryRecords\SlimBus.Serialization.BinaryRecords.csproj", "{BEB9C699-7FFA-49E9-BCF3-586F33EFD8E3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SlimBus.Serializers.BinaryRecords", "SlimBus.Serializers.BinaryRecords\SlimBus.Serializers.BinaryRecords.csproj", "{BEB9C699-7FFA-49E9-BCF3-586F33EFD8E3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SlimBus.Transports.RabbitMQ", "SlimBus.Transports.RabbitMQ\SlimBus.Transports.RabbitMQ.csproj", "{29DE8D78-57B1-4394-B6A8-5CD2FF36F819}"
 EndProject
