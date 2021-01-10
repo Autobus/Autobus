@@ -27,4 +27,4 @@ jobs:
           dotnet pack -c Release --output nupkgs SlimBus.Transports.RabbitMQ/SlimBus.Transports.RabbitMQ.csproj
       - name: Publish
         run: |
-          dotnet nuget push nupkgs/SlimBus.*.nupkg -k ${{secrets.NUGET_API_KEY}} --skip-duplicate
+          dotnet nuget push "nupkgs/SlimBus.*.nupkg" -k ${{secrets.NUGET_API_KEY}} --skip-duplicate
