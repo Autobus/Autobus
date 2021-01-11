@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <LangVersion>9</LangVersion>
+    <TargetFramework>net5.0</TargetFramework>
+    <PackageId>Autobus.Serializers.BinaryRecords</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Chandler Stowell</Authors>
+    <PackageDescription>Autobus BinaryRecords Serialization</PackageDescription>
+    <RepositoryUrl>https://github.com/SlimBus/Autobus.git</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/SlimBus/Autobus</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/SlimBus/Autobus/blob/main/LICENSE</PackageLicenseUrl>
+    <copyright>Copyright 2021</copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BinaryRecords" Version="0.1.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Autobus\Autobus.csproj" />
+  </ItemGroup>
+
+</Project>
