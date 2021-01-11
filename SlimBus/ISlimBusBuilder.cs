@@ -1,13 +1,13 @@
 using SlimBus.Abstractions;
 using SlimBus.Implementations;
+using System;
 
 namespace SlimBus
 {
     public interface ISlimBusBuilder
     {
-        ISlimBusBuilder UseTransport<TTransportFactory, TConfig>(TConfig config)
-            where TTransportFactory : ITransportFactory<TConfig>, new()
-            where TConfig : class;
+        ISlimBusBuilder UseTransport<TTransportBuilder>(Action<TTransportBuilder> onBuild)
+            where TTransportBuilder : ITransportBuilder, new();
 
         ISlimBusBuilder UseService(IServiceContract serviceContract);
 

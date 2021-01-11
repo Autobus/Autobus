@@ -52,13 +52,14 @@ namespace SlimBus
             return this;
         }
 
-        public ISlimBusBuilder UseTransport<TTransportFactory, TConfig>(TConfig config)
-            where TTransportFactory : ITransportFactory<TConfig>, new()
-            where TConfig : class
+        public ISlimBusBuilder UseTransport<TTransportBuilder>(Action<TTransportBuilder> onBuild)
+            where TTransportBuilder : ITransportBuilder, new()
         {
             if (_transport != null)
                 throw new Exception("Already defined a transport!");
-            _transport = new TTransportFactory().Create(config);
+            var builder = new TTransportBuilder();
+            onBuild(builder);
+            _transport = builder.Build();
             return this;
         }
 

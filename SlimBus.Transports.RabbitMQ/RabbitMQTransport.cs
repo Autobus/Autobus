@@ -1,9 +1,7 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using SlimBus.Abstractions;
 using SlimBus.Implementations;
-using SlimBus.Abstractions;
-using SlimBus.Delegates;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Collections.Concurrent;
@@ -11,17 +9,10 @@ using System.Collections.Generic;
 
 namespace SlimBus.Transports.RabbitMQ
 {
-    public class RabbitMQTransportConfig
-    { 
-        public string Username { get; set; }
-        public string Password { get; set; }
-        public string VirtualHost { get; set; }
-        public string HostName { get; set; }
-        public bool UseConsistentHashing { get; set; }
-    }
-
-    public class RabbitMQTransport : BaseTransport<RabbitMQTransportConfig>
+    public class RabbitMQTransport : BaseTransport
     {
+        private readonly RabbitMQTransportConfig _config;
+
         private readonly EventingBasicConsumer _consumer;
 
         private readonly Dictionary<string, int> _boundServiceQueueRefs = new();
@@ -34,8 +25,9 @@ namespace SlimBus.Transports.RabbitMQ
 
         private string _queueName;
 
-        public RabbitMQTransport(IConnection connection, IModel channel, string queueName)
+        public RabbitMQTransport(RabbitMQTransportConfig config, IConnection connection, IModel channel, string queueName)
         {
+            _config = config;
             _connection = connection;
             _channel = channel;
             _queueName = queueName;
@@ -43,9 +35,7 @@ namespace SlimBus.Transports.RabbitMQ
             // Start consuming packets on the queue
             _consumer = new EventingBasicConsumer(_channel);
             _consumer.Received += OnRecieved;
-            
-            // TODO: Config options for qos and auto ack
-            _channel.BasicQos(0, 1, false);
+            _channel.BasicQos(_config.PrefetchSize, _config.PrefetchCount, false);
             _channel.BasicConsume(_queueName, false, _consumer);
         }
 
@@ -66,9 +56,7 @@ namespace SlimBus.Transports.RabbitMQ
 
         public override void DeclareExchange(string name, Enums.ExchangeType type)
         {
-
-
-            if (Config.UseConsistentHashing)
+            if (_config.UseConsistentHashing)
             {
                 _channel.ExchangeDeclare(
                     exchange: name, 
@@ -96,7 +84,7 @@ namespace SlimBus.Transports.RabbitMQ
 
         public override void BindTo(string exchange, string routingKey)
         {
-            if (Config.UseConsistentHashing)
+            if (_config.UseConsistentHashing)
             {
                 _channel.QueueBind(_queueName, exchange, routingKey);
             }
@@ -105,7 +93,7 @@ namespace SlimBus.Transports.RabbitMQ
                 var queueName = GetExchangeRequestQueueName(exchange);
                 if (_boundServiceQueueRefs.TryGetValue(queueName, out var refs))
                 {
-                    _channel.QueueBind(queueName, exchange, routingKey);
+                    //_channel.QueueBind(queueName, exchange, routingKey);
                     _boundServiceQueueRefs[queueName] = refs + 1;
                     return;
                 }
@@ -125,7 +113,7 @@ namespace SlimBus.Transports.RabbitMQ
 
         public override void UnbindFrom(string exchange, string routingKey)
         {
-            if (Config.UseConsistentHashing)
+            if (_config.UseConsistentHashing)
             {
                 _channel.QueueUnbind(_queueName, exchange, routingKey);
             }

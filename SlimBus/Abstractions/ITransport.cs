@@ -1,8 +1,6 @@
 ﻿using SlimBus.Implementations;
-using SlimBus.Delegates;
 using SlimBus.Enums;
 using System;
-using System.Threading.Tasks;
 
 namespace SlimBus.Abstractions
 {
@@ -27,11 +25,5 @@ namespace SlimBus.Abstractions
         ServiceRequestModel CreateNewRequest(int requestId);
 
         bool DiscardRequest(ServiceRequestModel requestModel);
-    }
-
-    public interface ITransport<TConfig> : ITransport 
-        where TConfig: class 
-    {
-        TConfig Config { get; init; }
     }
 }

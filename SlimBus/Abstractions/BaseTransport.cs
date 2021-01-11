@@ -28,9 +28,4 @@ namespace SlimBus.Abstractions
         public abstract void Acknowledge(object sender);
         public abstract void Reject(object sender);
     }
-
-    public abstract class BaseTransport<TConfig> : BaseTransport, ITransport<TConfig> where TConfig: class
-    {
-        public TConfig Config { get; init; }
-    }
 }
