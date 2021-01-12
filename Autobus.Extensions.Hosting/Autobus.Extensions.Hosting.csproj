@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <PackageId>Autobus.Extensions.Hosting</PackageId>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <Version>0.1.1</Version>
     <Authors>Chandler Stowell</Authors>
     <PackageDescription>Autobus Extensions for Microsoft.Extensions.Hosting</PackageDescription>
