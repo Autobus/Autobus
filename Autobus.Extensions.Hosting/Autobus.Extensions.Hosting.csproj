@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <PackageId>Autobus.Extensions.Hosting</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <Authors>Chandler Stowell</Authors>
     <PackageDescription>Autobus Extensions for Microsoft.Extensions.Hosting</PackageDescription>
     <RepositoryUrl>https://github.com/SlimBus/Autobus.git</RepositoryUrl>
@@ -11,14 +11,6 @@
     <PackageTags></PackageTags>
     <PackageLicenseUrl>https://github.com/SlimBus/Autobus/blob/main/LICENSE</PackageLicenseUrl>
     <copyright>Copyright 2021</copyright>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>

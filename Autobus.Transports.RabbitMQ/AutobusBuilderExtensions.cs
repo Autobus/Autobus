@@ -1,9 +1,9 @@
-﻿using Autobus.Abstractions;
+﻿using Autobus.Transports.RabbitMQ;
 using System;
 
-namespace Autobus.Transports.RabbitMQ
+namespace Autobus
 {
-    public static class IAutobusBuilderExtensions
+    public static class AutobusBuilderExtensions
     {
         public static IAutobusBuilder UseRabbitMQTransport(this IAutobusBuilder builder, Action<RabbitMQTransportBuilder> onBuild) => 
             builder.UseTransport(onBuild);

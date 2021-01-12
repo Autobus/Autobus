@@ -7,7 +7,7 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <PackageId>Autobus</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <Authors>Chandler Stowell</Authors>
     <PackageDescription>Autobus</PackageDescription>
     <RepositoryUrl>https://github.com/SlimBus/Autobus.git</RepositoryUrl>

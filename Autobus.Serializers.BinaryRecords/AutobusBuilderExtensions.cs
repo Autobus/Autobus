@@ -1,9 +1,10 @@
 ﻿using System;
+using Autobus.Serialization.BinaryRecords;
 using BinaryRecords;
 
-namespace Autobus.Serialization.BinaryRecords
+namespace Autobus
 {
-    public static class IAutobusBuilderExtensions
+    public static class AutobusBuilderExtensions
     {
         public static IAutobusBuilder UseBinaryRecordsSerialization(this IAutobusBuilder builder, Action<BinarySerializerBuilder> onSerializerBuild)
         {

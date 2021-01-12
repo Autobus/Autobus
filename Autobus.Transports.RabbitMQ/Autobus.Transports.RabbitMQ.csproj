@@ -2,8 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <PackageId>Autobus.Transports.RabbitMQ</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <Authors>Chandler Stowell</Authors>
     <PackageDescription>Autobus RabbitMQ Transport</PackageDescription>
     <RepositoryUrl>https://github.com/SlimBus/Autobus.git</RepositoryUrl>

@@ -1,6 +1,7 @@
 using Autobus.Abstractions;
 using Autobus.Implementations;
 using System;
+using System.Reflection;
 
 namespace Autobus
 {
@@ -13,6 +14,8 @@ namespace Autobus
 
         IAutobusBuilder UseService<T>() where T : BaseServiceContract, new() =>
             UseService(ServiceContractBuilder.Build<T>());
+
+        IAutobusBuilder UseServicesFromAssembly(Assembly assembly);
 
         IAutobusBuilder UseServicesFromAllAssemblies();
 

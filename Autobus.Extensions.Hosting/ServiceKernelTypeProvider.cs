@@ -206,16 +206,12 @@ namespace Autobus.Extensions.Hosting
             ilGenerator.Emit(OpCodes.Ret);
         }
 
-        private static MethodInfo GetRequiredServiceMethod(Type serviceType)
-        {
-            var method = typeof(ServiceProviderServiceExtensions).GetMethods()
-                .FirstOrDefault(method => method.IsGenericMethod && method.Name == "GetRequiredService");
-            return method.MakeGenericMethod(serviceType);
-        }
+        private static MethodInfo GetRequiredServiceMethod(Type serviceType) =>
+            typeof(ServiceProviderServiceExtensions).GetMethods()
+                .First(method => method.IsGenericMethod && method.Name == "GetRequiredService")
+                .MakeGenericMethod(serviceType);
 
-        public static void ContinueWithScopeDispose(Task task, IServiceScope serviceScope)
-        {
+        public static void ContinueWithScopeDispose(Task task, IServiceScope serviceScope) => 
             task.ContinueWith(_ => serviceScope.Dispose());
-        }
     }
 }

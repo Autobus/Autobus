@@ -295,9 +295,7 @@ namespace Autobus
         private static async Task HandleIncomingRequest<TRequest, TResponse>(Autobus autobus, Delegate messageHandler, ReadOnlyMemory<byte> data, object sender)
         {
             var deserialized = autobus._serializationProvider.Deserialize<TRequest>(data);
-            var requestType = typeof(TRequest);
             var resp = await ((OnRequestDelegate<TRequest, TResponse>)messageHandler)(deserialized);
-            var responseModel = autobus._serviceRegistry.GetResponseModel(requestType);
             autobus._serializationProvider.Serialize(resp, (Transport: autobus._transport, Sender: sender), (data, state) =>
             {
                 state.Transport.Publish(state.Sender, data);

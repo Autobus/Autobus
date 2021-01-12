@@ -3,6 +3,8 @@ using System.Linq;
 using System.Collections.Generic;
 using Autobus.Abstractions;
 using Autobus.Implementations;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace Autobus
 {
@@ -26,23 +28,35 @@ namespace Autobus
             return this;
         }
 
-        public IAutobusBuilder UseServicesFromAllAssemblies()
+        public IAutobusBuilder UseServicesFromAssembly(Assembly assembly)
         {
             var genericBuildMethod = typeof(ServiceContractBuilder).GetMethods()
                 .First(m => m.IsGenericMethod && m.IsStatic && m.Name == "Build");
-            var loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
-            foreach (var loadedAssembly in loadedAssemblies)
+            var contractTypes = assembly.GetTypes()
+                .Where(t => t.BaseType == typeof(BaseServiceContract));
+            foreach (var contractType in contractTypes)
             {
-                var contractTypes = loadedAssembly.GetTypes().Where(t => t.BaseType == typeof(BaseServiceContract));
-                foreach (var contractType in contractTypes)
-                {
-                    if (contractType == typeof(AnonymousServiceContract))
-                        continue;
-                    var builderMethod = genericBuildMethod.MakeGenericMethod(contractType);
-                    var contract = (IServiceContract)builderMethod.Invoke(null, null);
-                    UseService(contract);
-                }
+                if (contractType == typeof(AnonymousServiceContract))
+                    continue;
+                var builderMethod = genericBuildMethod.MakeGenericMethod(contractType);
+                var contract = (IServiceContract)builderMethod.Invoke(null, null);
+                UseService(contract);
             }
+            return this;
+        }
+
+        public IAutobusBuilder UseServicesFromAllAssemblies()
+        {
+            static void LoadAssemblyReferences(Assembly assembly)
+            {
+                foreach (var name in assembly.GetReferencedAssemblies())
+                    if (AppDomain.CurrentDomain.GetAssemblies().All(a => a.FullName != name.FullName))
+                        LoadAssemblyReferences(Assembly.Load(name));
+            }
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+                LoadAssemblyReferences(assembly);
+            foreach (var loadedAssembly in AppDomain.CurrentDomain.GetAssemblies())
+                UseServicesFromAssembly(loadedAssembly);
             return this;
         }
 
