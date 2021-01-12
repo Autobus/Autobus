@@ -16,7 +16,7 @@ namespace Autobus.Implementations
 
         private HashSet<Type> _handledMessageTypes = new();
         
-        private Dictionary<Type, Type> _requests = new();
+        private Dictionary<MessageModel, MessageModel> _requests = new();
         
         private List<MessageModel> _messages = new();
 
@@ -38,11 +38,11 @@ namespace Autobus.Implementations
                 throw new Exception($"Ambiguous use of {requestType.FullName} message.");
             if (!_handledMessageTypes.Add(responseType))
                 throw new Exception($"Ambiguous use of {responseType.FullName} message.");
-            var requestContract = new MessageModel(requestType, MessageBehavior.Request);
-            var responseContract = new MessageModel(responseType, MessageBehavior.Response);
-            _requests[requestContract.Type] = responseContract.Type;
-            _messages.Add(requestContract);
-            _messages.Add(responseContract);
+            var requestModel = new MessageModel(requestType, MessageBehavior.Request);
+            var responseModel = new MessageModel(responseType, MessageBehavior.Response);
+            _requests[requestModel] = responseModel;
+            _messages.Add(requestModel);
+            _messages.Add(responseModel);
             return this;
         }
 
@@ -80,7 +80,7 @@ namespace Autobus.Implementations
             }
             contract.Name = _name;
             contract.Interfaces = interfaceModels;
-            contract.Requests = new ReadOnlyDictionary<Type, Type>(_requests);
+            contract.Requests = new ReadOnlyDictionary<MessageModel, MessageModel>(_requests);
             contract.Messages = _messages;
             return contract;
         }

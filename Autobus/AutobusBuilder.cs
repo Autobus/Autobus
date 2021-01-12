@@ -5,6 +5,7 @@ using Autobus.Abstractions;
 using Autobus.Implementations;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Autobus.Enums;
 
 namespace Autobus
 {
@@ -13,8 +14,6 @@ namespace Autobus
         private BaseTransport _transport;
 
         private ICorrelationIdProvider? _correlationIdProvider;
-
-        private IRoutingDirectionProvider? _routingDirectionProvider;
 
         private ISerializationProvider? _serializationProvider;
 
@@ -83,12 +82,6 @@ namespace Autobus
             return this;
         }
 
-        public IAutobusBuilder UseRoutingDirectionProvider(IRoutingDirectionProvider routingDirectionProvider)
-        {
-            _routingDirectionProvider = routingDirectionProvider;
-            return this;
-        }
-
         public IAutobus Build()
         {
             if (_transport == null)
@@ -97,16 +90,7 @@ namespace Autobus
                 throw new Exception("No serialization provider defined!");
             var serviceContractRegistry = new ServiceRegistry(_serviceContracts);
             _correlationIdProvider ??= new CorrelationIdProvider();
-            _routingDirectionProvider ??= new RoutingDirectionProvider();
-
-            // TODO: Figure out if we should declare exchanges here or on demand
-            foreach (var model in serviceContractRegistry.GetExchangeModels())
-            {
-                var name = _routingDirectionProvider.GetExchangeName(model);
-                _transport.DeclareExchange(name, model.ExchangeType);
-            }
-
-            var autobus = new Autobus(serviceContractRegistry, _serializationProvider, _routingDirectionProvider, _correlationIdProvider, _transport);
+            var autobus = new Autobus(serviceContractRegistry, _serializationProvider, _correlationIdProvider, _transport);
             _transport.SetMessageHandler(autobus.HandleMessage);
             return autobus;
         }

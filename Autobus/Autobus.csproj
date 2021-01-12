@@ -7,7 +7,7 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <PackageId>Autobus</PackageId>
-    <Version>0.1.1</Version>
+    <Version>0.1.2</Version>
     <Authors>Chandler Stowell</Authors>
     <PackageDescription>Autobus</PackageDescription>
     <RepositoryUrl>https://github.com/SlimBus/Autobus.git</RepositoryUrl>
@@ -16,5 +16,9 @@
     <PackageLicenseUrl>https://github.com/SlimBus/Autobus/blob/main/LICENSE</PackageLicenseUrl>
     <copyright>Copyright 2021</copyright>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Exceptions" />
+  </ItemGroup>
 
 </Project>

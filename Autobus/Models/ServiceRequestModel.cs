@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Autobus.Implementations
+namespace Autobus.Models
 {
     public record ServiceRequestModel(int RequestId, TaskCompletionSource<ServiceResponseModel> ResponseTask);
 }

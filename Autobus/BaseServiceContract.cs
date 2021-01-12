@@ -12,12 +12,10 @@ namespace Autobus
         
         public IReadOnlyList<ServiceInterfaceModel> Interfaces { get; internal set; }
         
-        public ReadOnlyDictionary<Type, Type> Requests { get; internal set; }
+        public ReadOnlyDictionary<MessageModel, MessageModel> Requests { get; internal set; }
         
         public IReadOnlyList<MessageModel> Messages { get; internal set; }
         
         public abstract void Build(IServiceContractBuilder builder);
-
-        public Type GetResponseType(Type requestType) => Requests[requestType];
     }
 }

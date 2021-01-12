@@ -9,7 +9,7 @@ namespace Autobus.Abstractions
     {
         public string Name { get; }
         public IReadOnlyList<ServiceInterfaceModel> Interfaces { get; }
-        public ReadOnlyDictionary<Type, Type> Requests { get; }
+        public ReadOnlyDictionary<MessageModel, MessageModel> Requests { get; }
         public IReadOnlyList<MessageModel> Messages { get; }
     }
 }

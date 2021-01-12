@@ -29,11 +29,6 @@ namespace Autobus
         IAutobusBuilder UseCorrelationIdProvider<T>() where T : ICorrelationIdProvider, new() =>
             UseCorrelationIdProvider(new T());
 
-        IAutobusBuilder UseRoutingDirectionProvider(IRoutingDirectionProvider routingDirectionProvider);
-
-        IAutobusBuilder UseRoutingDirectionProvider<T>() where T : IRoutingDirectionProvider, new() =>
-            UseRoutingDirectionProvider(new T());
-
         IAutobus Build();
     }
 }

@@ -1,20 +1,18 @@
 ﻿using Autobus.Implementations;
-using Autobus.Enums;
 using System;
+using Autobus.Models;
 
 namespace Autobus.Abstractions
 {
     public interface ITransport : IDisposable
     {
-        void DeclareExchange(string name, ExchangeType type);
+        void BindTo(IServiceContract service, MessageModel message);
 
-        void BindTo(string exchange, string routingKey);
+        void UnbindFrom(IServiceContract service, MessageModel message);
 
-        void UnbindFrom(string exchange, string routingKey);
+        void Publish(IServiceContract service, MessageModel message, ReadOnlySpanOrMemory<byte> data);
 
-        void Publish(string exchange, string routingKey, ReadOnlySpanOrMemory<byte> data);
-
-        void Publish(string exchange, string routingKey, ReadOnlySpanOrMemory<byte> data, ServiceRequestModel requestModel);
+        void Publish(IServiceContract service, MessageModel message, ReadOnlySpanOrMemory<byte> data, ServiceRequestModel requestModel);
 
         void Publish(object sender, ReadOnlySpanOrMemory<byte> data);
 

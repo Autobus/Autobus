@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Autobus.Implementations
+namespace Autobus.Models
 {
     public record ServiceResponseModel(ReadOnlyMemory<byte> Data, object Sender);
 }

@@ -6,6 +6,8 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using Autobus.Enums;
+using Autobus.Models;
 
 namespace Autobus.Transports.RabbitMQ
 {
@@ -13,11 +15,11 @@ namespace Autobus.Transports.RabbitMQ
     {
         private readonly RabbitMQTransportConfig _config;
 
-        private readonly EventingBasicConsumer _consumer;
-
-        private readonly Dictionary<string, int> _boundServiceQueueRefs = new();
+        private readonly AsyncEventingBasicConsumer _consumer;
 
         private ConcurrentDictionary<int, ServiceRequestModel> _pendingRequests = new();
+
+        private Dictionary<string, int> _serviceQueueRefs = new();
 
         private IConnection _connection;
 
@@ -33,119 +35,125 @@ namespace Autobus.Transports.RabbitMQ
             _queueName = queueName;
 
             // Start consuming packets on the queue
-            _consumer = new EventingBasicConsumer(_channel);
-            _consumer.Received += OnRecieved;
+            _consumer = new AsyncEventingBasicConsumer(_channel);
+            _consumer.Received += OnIncomingPacket;
             _channel.BasicQos(_config.PrefetchSize, _config.PrefetchCount, false);
             _channel.BasicConsume(_queueName, false, _consumer);
         }
 
-        private void OnRecieved(object sender, BasicDeliverEventArgs ea)
-        {
-            Task.Run(async () =>
-            {
-                try
-                {
-                    await OnIncomingPacket(sender, ea);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                }
-            });
-        }
+        private static string GetServiceRequestQueueName(IServiceContract service) => $"{service.Name}.Requests";
 
-        public override void DeclareExchange(string name, Enums.ExchangeType type)
+        public override void BindTo(IServiceContract service, MessageModel message)
         {
-            if (_config.UseConsistentHashing)
-            {
-                _channel.ExchangeDeclare(
-                    exchange: name, 
-                    type: "x-consistent-hash", 
-                    durable: false, 
-                    autoDelete: true, 
-                    arguments: new Dictionary<string, object>() { ["hash-header"] = "hash-on" });
-            }
+            if (message.Behavior is (MessageBehavior.Request or MessageBehavior.Command))
+                BindToRequest(service, message);
+            else if (message.Behavior is MessageBehavior.Event)
+                BindToEvent(service, message);
             else
-            {
-                var rabbitType = type switch
-                {
-                    Enums.ExchangeType.Topic => ExchangeType.Topic,
-                    Enums.ExchangeType.Fanout => ExchangeType.Fanout,
-                    _ => throw new NotImplementedException()
-                };
-                Console.WriteLine($"Declare exchange {name}, {rabbitType}");
-                _channel.ExchangeDeclare(
-                    exchange: name, 
-                    type: rabbitType);
-            }
+                throw new Exception();
         }
 
-        private static string GetExchangeRequestQueueName(string exchange) => $"{exchange}.Requests";
-
-        public override void BindTo(string exchange, string routingKey)
+        private void BindToRequest(IServiceContract service, MessageModel message)
         {
+            var (exchange, routingKey) = GetRoutingInfo(service, message);
             if (_config.UseConsistentHashing)
             {
+                _channel.ExchangeDeclare(
+                    exchange: exchange,
+                    type: "x-consistent-hash",
+                    durable: false,
+                    autoDelete: true,
+                    arguments: new Dictionary<string, object>() {["hash-header"] = "hash-on"});
                 _channel.QueueBind(_queueName, exchange, routingKey);
             }
             else
             {
-                var queueName = GetExchangeRequestQueueName(exchange);
-                if (_boundServiceQueueRefs.TryGetValue(queueName, out var refs))
-                {
-                    //_channel.QueueBind(queueName, exchange, routingKey);
-                    _boundServiceQueueRefs[queueName] = refs + 1;
-                    return;
-                }
-
-                var queue = _channel.QueueDeclare(
-                    queue: queueName,
-                    durable: true, 
-                    exclusive: false,
+                _channel.ExchangeDeclare(
+                    exchange: exchange,
+                    type: ExchangeType.Direct,
+                    durable: false,
                     autoDelete: false);
-
-                // TODO: Setup auto ack
+                var queueName = GetServiceRequestQueueName(service);
+                if (!_serviceQueueRefs.TryGetValue(queueName, out var refs))
+                {
+                    var queue = _channel.QueueDeclare(
+                        queue: queueName,
+                        durable: true,
+                        exclusive: false,
+                        autoDelete: false);
+                    _channel.BasicConsume(queue, false, _consumer);
+                    _serviceQueueRefs[queueName] = 0;
+                }
                 _channel.QueueBind(queueName, exchange, routingKey);
-                _channel.BasicConsume(queue, false, _consumer);
-                _boundServiceQueueRefs[queueName] = 1;
+                _serviceQueueRefs[queueName] = refs + 1;
             }
         }
 
-        public override void UnbindFrom(string exchange, string routingKey)
+        private void BindToEvent(IServiceContract service, MessageModel message)
+        {
+            var (exchange, routingKey) = GetRoutingInfo(service, message);
+            _channel.ExchangeDeclare(
+                exchange: exchange,
+                type: ExchangeType.Direct,
+                durable: false,
+                autoDelete: false);
+            _channel.QueueBind(_queueName, exchange, routingKey);
+        }
+        
+        public override void UnbindFrom(IServiceContract service, MessageModel message)
+        {
+            if (message.Behavior is (MessageBehavior.Request or MessageBehavior.Command))
+                UnbindFromRequest(service, message);
+            else if (message.Behavior is MessageBehavior.Event)
+                UnbindFromEvent(service, message);
+            else
+                throw new Exception();
+        }
+
+        private void UnbindFromRequest(IServiceContract service, MessageModel message)
         {
             if (_config.UseConsistentHashing)
             {
+                var (exchange, routingKey) = GetRoutingInfo(service, message);
                 _channel.QueueUnbind(_queueName, exchange, routingKey);
             }
             else
             {
-                var queueName = GetExchangeRequestQueueName(exchange);
-                var refs = _boundServiceQueueRefs[queueName] = _boundServiceQueueRefs[queueName] - 1;
+                var queueName = GetServiceRequestQueueName(service);
+                var refs = _serviceQueueRefs[queueName] = _serviceQueueRefs[queueName] - 1;
                 if (refs == 0)
                 {
                     _channel.QueueDelete(
                         queue: queueName,
                         ifUnused: true);
-                    _boundServiceQueueRefs.Remove(queueName);
+                    _serviceQueueRefs.Remove(queueName);
                 }
             }
         }
 
-        public override void Publish(string exchange, string routingKey, ReadOnlySpanOrMemory<byte> data)
+        private void UnbindFromEvent(IServiceContract service, MessageModel message)
+        {
+            var (exchange, routingKey) = GetRoutingInfo(service, message);
+            _channel.QueueUnbind(_queueName, exchange, routingKey);
+        }
+
+        public override void Publish(IServiceContract service, MessageModel message, ReadOnlySpanOrMemory<byte> data)
         {
             var props = _channel.CreateBasicProperties();
             // Have to make a memory allocation in case we were passed a span, rabbit mq is expecting memory
             var passableData = data.IsMemory ? data.Memory : data.Span.ToArray();
+            var (exchange, routingKey) = GetRoutingInfo(service, message);
             _channel.BasicPublish(exchange, routingKey, props, passableData);
         }
 
-        public override void Publish(string exchange, string routingKey, ReadOnlySpanOrMemory<byte> data, ServiceRequestModel requestModel)
+        public override void Publish(IServiceContract service, MessageModel message, ReadOnlySpanOrMemory<byte> data, ServiceRequestModel requestModel)
         {
             var props = _channel.CreateBasicProperties();
             props.ReplyTo = _queueName;
             props.CorrelationId = requestModel.RequestId.ToString();
             // Have to make a memory allocation in case we were passed a span, rabbit mq is expecting memory
             var passableData = data.IsMemory ? data.Memory : data.Span.ToArray();
+            var (exchange, routingKey) = GetRoutingInfo(service, message);
             _channel.BasicPublish(exchange, routingKey, props, passableData);
         }
 
@@ -218,5 +226,13 @@ namespace Autobus.Transports.RabbitMQ
                 throw new Exception();
             _channel.BasicReject(ea.DeliveryTag, true);
         }
+
+        private static (string Exchange, string RoutingKey) GetRoutingInfo(IServiceContract service, MessageModel message) =>
+            message.Behavior switch
+            {
+                MessageBehavior.Request or MessageBehavior.Command => (service.Name, message.Name),
+                MessageBehavior.Event => ($"{service.Name}.Events", message.Name),
+                _ => throw new Exception($"Unroutable message: {message}")
+            };
     }
 }

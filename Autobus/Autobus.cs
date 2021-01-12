@@ -7,7 +7,7 @@ using Autobus.Enums;
 using System.Collections.Generic;
 using System.Reflection;
 using Autobus.Providers;
-using Autobus.Implementations;
+using Autobus.Models;
 
 namespace Autobus
 {
@@ -16,8 +16,6 @@ namespace Autobus
         private readonly IServiceRegistry _serviceRegistry;
 
         private readonly ISerializationProvider _serializationProvider;
-
-        private readonly IRoutingDirectionProvider _routingDirectionProvider;
 
         private readonly ICorrelationIdProvider _correlationIdProvider;
 
@@ -31,93 +29,93 @@ namespace Autobus
 
         private readonly Dictionary<Type, nint> _messageHandlerFuncs = new();
 
-        private readonly Dictionary<string, Type> _messageIdentities = new();
-
-        internal Autobus(IServiceRegistry serviceRegistry, ISerializationProvider serializationProvider, IRoutingDirectionProvider routingDirectionProvider, ICorrelationIdProvider correlationIdProvider, ITransport transport)
+        internal Autobus(IServiceRegistry serviceRegistry, ISerializationProvider serializationProvider, ICorrelationIdProvider correlationIdProvider, ITransport transport)
         {
             _serviceRegistry = serviceRegistry;
             _serializationProvider = serializationProvider;
-            _routingDirectionProvider = routingDirectionProvider;
             _correlationIdProvider = correlationIdProvider;
             _transport = transport;
-            foreach (var messageModel in _serviceRegistry.GetMessageModels())
-                _messageIdentities[_routingDirectionProvider.GetMessageRoutingKey(messageModel)] = messageModel.Type;
         }
 
         public void Publish<TMessage>(TMessage message)
         {
-            var messageExchange = _serviceRegistry.GetMessageExchange<TMessage>();
             var messageModel = _serviceRegistry.GetMessageModel<TMessage>();
-            var exchangeName = _routingDirectionProvider.GetExchangeName(messageExchange);
-            var routingKey = _routingDirectionProvider.GetMessageRoutingKey(messageModel);
-            _serializationProvider.Serialize(message, (Transport: _transport, ExchangeName: exchangeName, RoutingKey: routingKey), (data, state) =>
+            var service = _serviceRegistry.GetOwningService(messageModel);
+            _serializationProvider.Serialize(message, (Transport: _transport, Service: service, Message: messageModel), 
+                (data, state) =>
             {
-                state.Transport.Publish(state.ExchangeName, state.RoutingKey, data);
+                state.Transport.Publish(state.Service, state.Message, data);
             });
         }
 
         public Task<TResponse> Publish<TRequest, TResponse>(TRequest message)
         {
-            var messageExchange = _serviceRegistry.GetMessageExchange<TRequest>();
             var messageModel = _serviceRegistry.GetMessageModel<TRequest>();
-            var exchangeName = _routingDirectionProvider.GetExchangeName(messageExchange);
-            var routingKey = _routingDirectionProvider.GetMessageRoutingKey(messageModel);
+            var service = _serviceRegistry.GetOwningService(messageModel);
             var requestId = _correlationIdProvider.GetNextCorrelationId();
-            var requestModel = _transport.CreateNewRequest(requestId);
-            _serializationProvider.Serialize(message, (Transport: _transport, ExchangeName: exchangeName, RoutingKey: routingKey, Request: requestModel), (data, state) =>
+            var request = _transport.CreateNewRequest(requestId);
+            _serializationProvider.Serialize(message, (Transport: _transport, Service: service, Message: messageModel, Request: request), (data, state) =>
             {
-                state.Transport.Publish(state.ExchangeName, state.RoutingKey, data, state.Request);
+                state.Transport.Publish(state.Service, state.Message, data, state.Request);
             });
-            return WaitForRequestResponse<TResponse>(requestModel);
+            return WaitForResponse<TResponse>(request);
         }
 
-        private async Task<TResponse> WaitForRequestResponse<TResponse>(ServiceRequestModel requestModel)
+        private async Task<TResponse> WaitForResponse<TResponse>(ServiceRequestModel request)
         {
             // TODO: Handle timeouts here. If we wait too long we call DiscardRequest on the transport
-            var responseModel = await requestModel.ResponseTask.Task;
+            var response = await request.ResponseTask.Task;
             try
             {
-                var deserialized = _serializationProvider.Deserialize<TResponse>(responseModel.Data);
-                _transport.Acknowledge(responseModel.Sender);
+                var deserialized = _serializationProvider.Deserialize<TResponse>(response.Data);
+                _transport.Acknowledge(response.Sender);
                 return deserialized;
             }
             catch
             {
                 // TODO: We probably want to do some more error stuff here
-                _transport.Reject(responseModel.Sender);
+                _transport.Reject(response.Sender);
                 throw;
             }
         }
 
         internal unsafe Task HandleMessage(string identity, ReadOnlyMemory<byte> data, object sender)
         {
-            if (!_messageIdentities.TryGetValue(identity, out var messageType))
-                throw new Exception(); // TODO: Exception types
-            var messageModel = _serviceRegistry.GetMessageModel(messageType);
+            var messageModel = _serviceRegistry.GetMessageModel(identity);
+            var messageType = messageModel.Type;
             if (messageModel.Behavior == MessageBehavior.Request)
             {
                 if (!_messageSubscriptions.TryGetValue(messageType, out var messageHandler))
-                    throw new Exception(); // TODO: Exception types
+                {
+                    // TODO: Log warning
+                    throw new Exception();
+                }
                 var handlerPtr = (delegate*<Autobus, Delegate, ReadOnlyMemory<byte>, object, Task>)_messageHandlerFuncs[messageType];
                 return handlerPtr(this, messageHandler, data, sender);
             }
             else if (messageModel.Behavior == MessageBehavior.Command)
             {
                 if (!_messageSubscriptions.TryGetValue(messageType, out var messageHandler))
-                    throw new Exception(); // TODO: Exception types
+                {
+                    // TODO: Log warning
+                    throw new Exception();
+                }
                 var handlerPtr = (delegate*<Autobus, Delegate, ReadOnlyMemory<byte>, Task>)_messageHandlerFuncs[messageType];
                 return handlerPtr(this, messageHandler, data);
             }
             else if (messageModel.Behavior == MessageBehavior.Event)
             {
-                if (!_eventSubscriptions.TryGetValue(messageType, out var eventSubscripers))
+                if (!_eventSubscriptions.TryGetValue(messageType, out var subscribers))
+                {
+                    // TODO: Log warning
                     throw new Exception();
+                }
                 var handlerPtr = (delegate*<Autobus, Delegate, ReadOnlyMemory<byte>, Task>)_messageHandlerFuncs[messageType];
-                if (eventSubscripers.Count == 1)
-                    return handlerPtr(this, eventSubscripers[0], data);
-                var eventTasks = new Task[eventSubscripers.Count];
+                if (subscribers.Count == 1)
+                    return handlerPtr(this, subscribers[0], data);
+                var eventTasks = new Task[subscribers.Count];
                 for (var i = 0; i < eventTasks.Length; i++)
-                    eventTasks[i] = handlerPtr(this, eventSubscripers[i], data);
+                    eventTasks[i] = handlerPtr(this, subscribers[i], data);
                 return Task.WhenAll(eventTasks);
             }
             else
@@ -126,13 +124,16 @@ namespace Autobus
 
         public unsafe void Subscribe<TRequest, TResponse>(OnRequestDelegate<TRequest, TResponse> onRequest)
         {
-            if (!CanSubscribeTo<TRequest, TResponse>())
-                throw new Exception(); // TODO: Exception types
-            var requestType = typeof(TRequest);
-            if (!_messageSubscriptions.TryAdd(requestType, onRequest))
-                throw new Exception();
+            var requestModel = _serviceRegistry.GetMessageModel<TRequest>();
+            var responseModel = _serviceRegistry.GetMessageModel<TResponse>();
+            var owningService = _serviceRegistry.GetOwningService(requestModel);
+            if (owningService.Requests.TryGetValue(requestModel, out var boundResponse) && 
+                boundResponse != responseModel)
+                throw new Exception($"Invalid request response pair: {requestModel.Name}/{responseModel.Name}");
+            if (!_messageSubscriptions.TryAdd(requestModel.Type, onRequest))
+                throw new Exception($"Already bound to request type: {requestModel.Name}");
             delegate*<Autobus, Delegate, ReadOnlyMemory<byte>, object, Task> handlerPtr = &HandleIncomingRequest<TRequest, TResponse>;
-            _messageHandlerFuncs[requestType] = (nint)handlerPtr;
+            _messageHandlerFuncs[requestModel.Type] = (nint)handlerPtr;
             BindTo<TRequest>();
         }
 
@@ -140,25 +141,29 @@ namespace Autobus
 
         public unsafe void Subscribe<TMessage>(OnMessageDelegate<TMessage> onMessage)
         {
-            if (!CanSubscribeTo<TMessage>())
-                throw new Exception();
-            var messageType = typeof(TMessage);
-            var messageModel = _serviceRegistry.GetMessageModel<TMessage>();
-            if (messageModel.Behavior == MessageBehavior.Command)
+            var message = _serviceRegistry.GetMessageModel<TMessage>();
+            switch (message.Behavior)
             {
-                if (!_messageSubscriptions.TryAdd(messageType, onMessage))
-                    throw new Exception();
-            }
-            else if (messageModel.Behavior == MessageBehavior.Event)
-            {
-                if (!_eventSubscriptions.TryGetValue(messageType, out var subscriptions))
-                    subscriptions = _eventSubscriptions[messageType] = new();
-                if (subscriptions.Contains(onMessage))
-                    throw new Exception();
-                subscriptions.Add(onMessage);
+                case MessageBehavior.Command:
+                {
+                    if (!_messageSubscriptions.TryAdd(message.Type, onMessage))
+                        throw new Exception($"Already bound to command type: {message.Name}");
+                    break;
+                }
+                case MessageBehavior.Event:
+                {
+                    if (!_eventSubscriptions.TryGetValue(message.Type, out var subscriptions))
+                        subscriptions = _eventSubscriptions[message.Type] = new();
+                    if (subscriptions.Contains(onMessage))
+                        throw new Exception();
+                    subscriptions.Add(onMessage);
+                    break;
+                }
+                default:
+                    throw new Exception($"Cant bind to message: {message}");
             }
             delegate*<Autobus, Delegate, ReadOnlyMemory<byte>, Task> handlerPtr = &HandleIncomingMessage<TMessage>;
-            _messageHandlerFuncs[messageType] = (nint)handlerPtr;
+            _messageHandlerFuncs[message.Type] = (nint)handlerPtr;
             BindTo<TMessage>();
         }
 
@@ -241,20 +246,18 @@ namespace Autobus
 
         private void BindTo(Type messageType)
         {
-            var messageExchange = _serviceRegistry.GetMessageExchange(messageType);
-            var messageModel = _serviceRegistry.GetMessageModel(messageType);
-            var routingKey = _routingDirectionProvider.GetMessageRoutingKey(messageModel);
-            _transport.BindTo(_routingDirectionProvider.GetExchangeName(messageExchange), routingKey);
+            var message = _serviceRegistry.GetMessageModel(messageType);
+            var service = _serviceRegistry.GetOwningService(message);
+            _transport.BindTo(service, message);
         }
 
         private void BindTo<TMessage>() => BindTo(typeof(TMessage));
 
         private void UnbindFrom(Type messageType)
         {
-            var messageExchange = _serviceRegistry.GetMessageExchange(messageType);
-            var messageModel = _serviceRegistry.GetMessageModel(messageType);
-            var routingKey = _routingDirectionProvider.GetMessageRoutingKey(messageModel);
-            _transport.UnbindFrom(_routingDirectionProvider.GetExchangeName(messageExchange), routingKey);
+            var message = _serviceRegistry.GetMessageModel(messageType);
+            var service = _serviceRegistry.GetOwningService(message); 
+            _transport.UnbindFrom(service, message);
         }
 
         private void UnbindFrom<TMessage>() => UnbindFrom(typeof(TMessage));
@@ -276,20 +279,6 @@ namespace Autobus
             foreach (var interfaceModel in contract.Interfaces)
                 _serviceClients[interfaceModel.Interface] = instance;
             return instance;
-        }
-
-        private bool CanSubscribeTo<TRequest, TResponse>()
-        {
-            var serviceContract = _serviceRegistry.GetMessageExchange<TRequest>().ServiceContract;
-            if (!serviceContract.Requests.TryGetValue(typeof(TRequest), out var responseType))
-                return false;
-            return responseType == typeof(TResponse);
-        }
-
-        private bool CanSubscribeTo<TMessage>()
-        {
-            var messageModel = _serviceRegistry.GetMessageModel<TMessage>();
-            return messageModel.Behavior == MessageBehavior.Command || messageModel.Behavior == MessageBehavior.Event;
         }
 
         private static async Task HandleIncomingRequest<TRequest, TResponse>(Autobus autobus, Delegate messageHandler, ReadOnlyMemory<byte> data, object sender)
