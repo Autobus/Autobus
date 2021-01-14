@@ -21,10 +21,12 @@ jobs:
           NUGET_AUTH_TOKEN: ${{secrets.NUGET_API_KEY}}
       - name: Pack
         run: |
+          dotnet pack -c Release --output nupkgs Autobus.Abstractions/Autobus.Abstractions.csproj
           dotnet pack -c Release --output nupkgs Autobus/Autobus.csproj
           dotnet pack -c Release --output nupkgs Autobus.Extensions.Hosting/Autobus.Extensions.Hosting.csproj
           dotnet pack -c Release --output nupkgs Autobus.Serializers.BinaryRecords/Autobus.Serializers.BinaryRecords.csproj
           dotnet pack -c Release --output nupkgs Autobus.Transports.RabbitMQ/Autobus.Transports.RabbitMQ.csproj
+          dotnet pack -c Release --output nupkgs Autobus.Loggers.Serilog/Autobus.Loggers.Serilog.csproj
       - name: Publish
         run: |
           dotnet nuget push "nupkgs/Autobus.*.nupkg" -k ${{secrets.NUGET_API_KEY}} --skip-duplicate
