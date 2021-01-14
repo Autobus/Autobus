@@ -31,7 +31,6 @@ namespace Autobus.Transports.RabbitMQ
 
         public BaseTransport Build()
         {
-            _connectionFactory.DispatchConsumersAsync = true;
             _connectionFactory.AutomaticRecoveryEnabled = true;
             var connection = _connectionFactory.CreateConnection();
             var channel = connection.CreateModel();

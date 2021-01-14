@@ -1,6 +1,6 @@
 ﻿using Autobus.Delegates;
 using Autobus.Enums;
-using Autobus.Implementations;
+using Autobus.Types;
 using Autobus.Models;
 
 namespace Autobus.Abstractions
@@ -9,7 +9,7 @@ namespace Autobus.Abstractions
     {
         protected MessageHandlerDelegate MessageHandler { get; private set; }
 
-        internal void SetMessageHandler(MessageHandlerDelegate messageHandler) => MessageHandler = messageHandler;
+        public void SetMessageHandler(MessageHandlerDelegate messageHandler) => MessageHandler = messageHandler;
 
         public abstract void BindTo(IServiceContract service, MessageModel message);
         public abstract ServiceRequestModel CreateNewRequest(int requestId);

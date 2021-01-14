@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <PackageId>Autobus.Loggers.Serilog</PackageId>
+        <Version>0.1.0</Version>
+        <TargetFramework>net5.0</TargetFramework>
+
+        <Authors>Chandler Stowell</Authors>
+        <PackageDescription>Autobus Serilog Logger</PackageDescription>
+        <PackageTags></PackageTags>
+        <RepositoryUrl>https://github.com/Autobus.Loggers/Autobus.Loggers.git</RepositoryUrl>
+        <PackageProjectUrl>https://github.com/Autobus.Loggers/Autobus.Loggers</PackageProjectUrl>
+        <PackageLicenseUrl>https://github.com/Autobus.Loggers/Autobus.Loggers/blob/main/LICENSE</PackageLicenseUrl>
+        <copyright>Copyright 2021</copyright>
+        <PackageIcon>icon.png</PackageIcon>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Serilog" Version="2.10.0" />
+        <ProjectReference Include="..\Autobus.Abstractions\Autobus.Abstractions.csproj" />
+        <Content Include="../icon.png" PackagePath="" Visible="false" />
+    </ItemGroup>
+    
+</Project>

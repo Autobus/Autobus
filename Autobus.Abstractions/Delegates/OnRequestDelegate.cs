@@ -6,5 +6,5 @@ using System.Threading.Tasks;
 
 namespace Autobus.Delegates
 {
-    public delegate Task OnMessageDelegate<TMessage>(TMessage message);
+    public delegate Task<TResponse> OnRequestDelegate<in TRequest, TResponse>(TRequest message);
 }

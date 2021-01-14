@@ -1,24 +1,25 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <PackageId>Autobus.Serializers.BinaryRecords</PackageId>
+    <Version>0.1.2</Version>
     <LangVersion>9</LangVersion>
     <TargetFramework>net5.0</TargetFramework>
-    <PackageId>Autobus.Serializers.BinaryRecords</PackageId>
-    <Version>0.1.1</Version>
+
     <Authors>Chandler Stowell</Authors>
     <PackageDescription>Autobus BinaryRecords Serialization</PackageDescription>
-    <RepositoryUrl>https://github.com/SlimBus/Autobus.git</RepositoryUrl>
-    <PackageProjectUrl>https://github.com/SlimBus/Autobus</PackageProjectUrl>
-    <PackageLicenseUrl>https://github.com/SlimBus/Autobus/blob/main/LICENSE</PackageLicenseUrl>
+    <PackageTags></PackageTags>
+    <RepositoryUrl>https://github.com/Autobus.Serializers/Autobus.Serializers.git</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/Autobus.Serializers/Autobus.Serializers</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/Autobus.Serializers/Autobus.Serializers/blob/main/LICENSE</PackageLicenseUrl>
     <copyright>Copyright 2021</copyright>
+    <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Autobus.Abstractions\Autobus.Abstractions.csproj" />
     <PackageReference Include="BinaryRecords" Version="0.1.3" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Autobus\Autobus.csproj" />
+    <Content Include="../icon.png" PackagePath="" Visible="false" />
   </ItemGroup>
 
 </Project>

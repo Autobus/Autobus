@@ -15,6 +15,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Autobus.Extensions.Hosting"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestServices2", "TestServices2\TestServices2.csproj", "{8CFA1E93-BE24-4C18-A143-76575F7E6A27}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Autobus.Abstractions", "Autobus.Abstractions\Autobus.Abstractions.csproj", "{4406903E-60A4-4177-A7FD-248C7AFCACB4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Autobus.Loggers.Serilog", "Autobus.Loggers.Serilog\Autobus.Loggers.Serilog.csproj", "{AD37693B-8165-441B-A926-9A739D989B8F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +49,14 @@ Global
 		{8CFA1E93-BE24-4C18-A143-76575F7E6A27}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8CFA1E93-BE24-4C18-A143-76575F7E6A27}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8CFA1E93-BE24-4C18-A143-76575F7E6A27}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4406903E-60A4-4177-A7FD-248C7AFCACB4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4406903E-60A4-4177-A7FD-248C7AFCACB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4406903E-60A4-4177-A7FD-248C7AFCACB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4406903E-60A4-4177-A7FD-248C7AFCACB4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AD37693B-8165-441B-A926-9A739D989B8F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AD37693B-8165-441B-A926-9A739D989B8F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AD37693B-8165-441B-A926-9A739D989B8F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AD37693B-8165-441B-A926-9A739D989B8F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

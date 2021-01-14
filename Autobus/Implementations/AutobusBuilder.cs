@@ -5,6 +5,7 @@ using Autobus.Abstractions;
 using Autobus.Implementations;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Autobus.Abstractions.Abstractions;
 using Autobus.Enums;
 
 namespace Autobus
@@ -17,7 +18,17 @@ namespace Autobus
 
         private ISerializationProvider? _serializationProvider;
 
+        private IAutobusLogger? _logger;
+
         private List<IServiceContract> _serviceContracts = new();
+        
+        private AutobusConfig _config = new();
+
+        public IAutobusBuilder UseRequestTimeout(int milliseconds)
+        {
+            _config.RequestTimeout = milliseconds;
+            return this;
+        }
 
         public IAutobusBuilder UseService(IServiceContract serviceContract)
         {
@@ -26,6 +37,9 @@ namespace Autobus
             _serviceContracts.Add(serviceContract);
             return this;
         }
+
+        public IAutobusBuilder UseService<T>() where T : BaseServiceContract, new() =>
+            UseService(ServiceContractBuilder.Build<T>());
 
         public IAutobusBuilder UseServicesFromAssembly(Assembly assembly)
         {
@@ -59,6 +73,14 @@ namespace Autobus
             return this;
         }
 
+        public IAutobusBuilder UseLogger(IAutobusLogger logger)
+        {
+            if (_logger != null)
+                throw new Exception("Already defined a logger");
+            _logger = logger;
+            return this;
+        }
+
         public IAutobusBuilder UseSerializer(ISerializationProvider serializationProvider)
         {
             _serializationProvider = serializationProvider;
@@ -88,9 +110,10 @@ namespace Autobus
                 throw new Exception("No transport defined!");
             if (_serializationProvider == null)
                 throw new Exception("No serialization provider defined!");
-            var serviceContractRegistry = new ServiceRegistry(_serviceContracts);
             _correlationIdProvider ??= new CorrelationIdProvider();
-            var autobus = new Autobus(serviceContractRegistry, _serializationProvider, _correlationIdProvider, _transport);
+            _logger ??= new AutobusConsoleLogger();
+            var serviceContractRegistry = new ServiceRegistry(_serviceContracts);
+            var autobus = new Autobus(_config, _logger, serviceContractRegistry, _serializationProvider, _correlationIdProvider, _transport);
             _transport.SetMessageHandler(autobus.HandleMessage);
             return autobus;
         }

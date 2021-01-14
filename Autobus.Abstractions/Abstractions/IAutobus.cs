@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using Autobus.Implementations;
 using Autobus.Abstractions;
 using Autobus.Delegates;
 using System.Collections.Generic;
@@ -19,8 +18,7 @@ namespace Autobus
 
         void Bind(object obj, IServiceContract serviceContract);
 
-        void Bind<TServiceContract>(object obj) where TServiceContract : BaseServiceContract, new() =>
-            Bind(obj, ServiceContractBuilder.Build<TServiceContract>());
+        void Bind<TServiceContract>(object obj) where TServiceContract : IServiceContract;
 
         void Unbind(object obj);
 

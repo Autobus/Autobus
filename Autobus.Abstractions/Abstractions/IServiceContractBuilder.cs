@@ -5,7 +5,7 @@ namespace Autobus
 {
     public interface IServiceContractBuilder
     {
-        IServiceContractBuilder UseName(string Name);
+        IServiceContractBuilder UseName(string name);
 
         IServiceContractBuilder AddInterface(Type interfaceType);
 
@@ -17,11 +17,11 @@ namespace Autobus
 
         IServiceContractBuilder AddCommand(Type commandType);
 
-        IServiceContractBuilder AddCommand<T>() => AddCommand(typeof(T));
+        IServiceContractBuilder AddCommand<TCommand>() => AddCommand(typeof(TCommand));
 
         IServiceContractBuilder AddEvent(Type eventType);
 
-        IServiceContractBuilder AddEvent<T>() => AddEvent(typeof(T));
+        IServiceContractBuilder AddEvent<TEvent>() => AddEvent(typeof(TEvent));
 
         IServiceContract Build();
     }

@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Autobus.Abstractions;
-using Autobus.Implementations;
+using Autobus.Types;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Collections.Concurrent;
@@ -15,7 +15,7 @@ namespace Autobus.Transports.RabbitMQ
     {
         private readonly RabbitMQTransportConfig _config;
 
-        private readonly AsyncEventingBasicConsumer _consumer;
+        private readonly ActionBasicConsumer _consumer;
 
         private ConcurrentDictionary<int, ServiceRequestModel> _pendingRequests = new();
 
@@ -35,8 +35,8 @@ namespace Autobus.Transports.RabbitMQ
             _queueName = queueName;
 
             // Start consuming packets on the queue
-            _consumer = new AsyncEventingBasicConsumer(_channel);
-            _consumer.Received += OnIncomingPacket;
+            _consumer = new ActionBasicConsumer(_channel);
+            _consumer.Received = OnIncomingPacket;
             _channel.BasicQos(_config.PrefetchSize, _config.PrefetchCount, false);
             _channel.BasicConsume(_queueName, false, _consumer);
         }
@@ -109,7 +109,7 @@ namespace Autobus.Transports.RabbitMQ
             else
                 throw new Exception();
         }
-
+        
         private void UnbindFromRequest(IServiceContract service, MessageModel message)
         {
             if (_config.UseConsistentHashing)
@@ -182,29 +182,21 @@ namespace Autobus.Transports.RabbitMQ
             return _pendingRequests.TryRemove(requestModel.RequestId, out _);
         }
 
-        private async Task OnIncomingPacket(object sender, BasicDeliverEventArgs ea)
+        private void OnIncomingPacket(object sender, BasicDeliverEventArgs ea)
         {
+            // Copy the body
+            var body = ea.Body.ToArray();
+            
             // If we have a correlation id we are dealing with a response.
             if (int.TryParse(ea.BasicProperties.CorrelationId, out var correlationId) &&
                 _pendingRequests.TryRemove(correlationId, out var requestModel))
             {
-                var responseModel = new ServiceResponseModel(ea.Body, ea);
+                var responseModel = new ServiceResponseModel(body, ea);
                 requestModel.ResponseTask.SetResult(responseModel);
                 return;
             }
 
-            try
-            {
-                // Get the routing key and try to handle it
-                await MessageHandler(ea.RoutingKey, ea.Body, ea);
-                _channel.BasicAck(ea.DeliveryTag, false);
-            }
-            catch (Exception e)
-            {
-                // TODO: do something with the exception
-                _channel.BasicReject(ea.DeliveryTag, false);
-                throw;
-            }
+            MessageHandler(ea.RoutingKey, body, ea);
         }
 
         public override void Dispose()

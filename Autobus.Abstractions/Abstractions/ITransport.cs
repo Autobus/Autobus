@@ -1,4 +1,4 @@
-﻿using Autobus.Implementations;
+﻿using Autobus.Types;
 using System;
 using Autobus.Models;
 
