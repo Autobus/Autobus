@@ -4,6 +4,6 @@
     {
         public bool UseConsistentHashing { get; set; } = false;
         public uint PrefetchSize { get; set; } = 0;
-        public ushort PrefetchCount { get; set; } = 1;
+        public ushort PrefetchCount { get; set; } = 0;
     }
 }
