@@ -85,22 +85,21 @@ namespace Autobus
             cts.CancelAfter(_config.RequestTimeout);
             cts.Token.Register(() =>
             {
-                if (request.ResponseTask.Task.IsCompleted) 
+                if (request.CompletionSource.Task.IsCompleted) 
                     return;
-                request.ResponseTask.SetException(
+                request.CompletionSource.SetException(
                     new TimeoutException($"Timed out waiting for: {typeof(TResponse).FullName}"));
             });
             
             ServiceResponseModel response;
             try
             {
-                response = await request.ResponseTask.Task.ConfigureAwait(false);
+                response = await request.CompletionSource.Task.ConfigureAwait(false);
                 cts.Cancel(); // Cancel the timeout
             }
             catch (Exception e)
             {
                 _transport.DiscardRequest(request);
-                _logger.Error(e);
                 throw;
             }
             finally
@@ -108,18 +107,7 @@ namespace Autobus
                 cts.Dispose();
             }
 
-            try
-            {
-                var deserialized = _serializationProvider.Deserialize<TResponse>(response.Data);
-                _transport.Acknowledge(response.Sender);
-                return deserialized;
-            }
-            catch (Exception e)
-            {
-                _transport.Reject(response.Sender);
-                _logger.Error(e);
-                throw;
-            }
+            return _serializationProvider.Deserialize<TResponse>(response.Data);
         }
 
         internal void HandleMessage(string name, ReadOnlyMemory<byte> data, object sender)

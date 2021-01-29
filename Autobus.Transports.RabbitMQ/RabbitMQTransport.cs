@@ -14,31 +14,54 @@ namespace Autobus.Transports.RabbitMQ
     public class RabbitMQTransport : BaseTransport
     {
         private readonly RabbitMQTransportConfig _config;
+        
+        private readonly RabbitMQProducerChannelPool _producerChannelPool;
 
-        private readonly ActionBasicConsumer _consumer;
+        private readonly ConcurrentDictionary<int, ServiceRequestModel> _pendingRequests = new();
 
-        private ConcurrentDictionary<int, ServiceRequestModel> _pendingRequests = new();
+        private readonly Dictionary<string, int> _serviceQueueRefs = new();
 
-        private Dictionary<string, int> _serviceQueueRefs = new();
+        private readonly IConnection _producingConnection;
+        
+        private readonly IConnection _consumingConnection;
 
-        private IConnection _connection;
+        private readonly (IModel Channel, string QueueName, ActionBasicConsumer Consumer) _consumptionChannel;
 
-        private IModel _channel;
-
-        private string _queueName;
-
-        public RabbitMQTransport(RabbitMQTransportConfig config, IConnection connection, IModel channel, string queueName)
+        private readonly (IModel Channel, string QueueName, ActionBasicConsumer Consumer) _replyChannel;
+        
+        public RabbitMQTransport(
+            RabbitMQTransportConfig config, 
+            IConnection producingConnection, 
+            IConnection consumingConnection)
         {
             _config = config;
-            _connection = connection;
-            _channel = channel;
-            _queueName = queueName;
+            
+            // Setup our normal event and request consumption
+            _consumingConnection = consumingConnection;
+            var consumptionChannel = _consumingConnection.CreateModel();
+            var consumptionQueue = consumptionChannel.QueueDeclare();
+            var messageConsumer = new ActionBasicConsumer(consumptionChannel)
+            {
+                Received = OnIncomingPacket
+            };
+            //consumptionChannel.BasicQos(_config.PrefetchSize, _config.PrefetchCount, false);
+            consumptionChannel.BasicConsume(messageConsumer, consumptionQueue, autoAck: false);
+            _consumptionChannel = (consumptionChannel, consumptionQueue, messageConsumer);
+            
+            // Setup our reply consumption
+            var replyChannel = _consumingConnection.CreateModel();
+            var replyQueue = replyChannel.QueueDeclare();
+            var replyConsumer = new ActionBasicConsumer(replyChannel)
+            {
+                Received = OnIncomingResponse
+            };
+            replyChannel.BasicConsume(replyConsumer, replyQueue, autoAck: true);
+            Console.WriteLine($"Consuming replies on: {replyQueue.QueueName}");
+            _replyChannel = (replyChannel, replyQueue, replyConsumer);
 
-            // Start consuming packets on the queue
-            _consumer = new ActionBasicConsumer(_channel);
-            _consumer.Received = OnIncomingPacket;
-            _channel.BasicQos(_config.PrefetchSize, _config.PrefetchCount, false);
-            _channel.BasicConsume(_queueName, false, _consumer);
+            // Setup our producing
+            _producingConnection = producingConnection;
+            _producerChannelPool = new RabbitMQProducerChannelPool(_producingConnection, config.ProducerChannelPoolSize);
         }
 
         private static string GetServiceRequestQueueName(IServiceContract service) => $"{service.Name}.Requests";
@@ -58,17 +81,20 @@ namespace Autobus.Transports.RabbitMQ
             var (exchange, routingKey) = GetRoutingInfo(service, message);
             if (_config.UseConsistentHashing)
             {
-                _channel.ExchangeDeclare(
+                _consumptionChannel.Channel.ExchangeDeclare(
                     exchange: exchange,
                     type: "x-consistent-hash",
                     durable: false,
                     autoDelete: true,
                     arguments: new Dictionary<string, object>() {["hash-header"] = "hash-on"});
-                _channel.QueueBind(_queueName, exchange, routingKey);
+                _consumptionChannel.Channel.QueueBind(
+                    _consumptionChannel.QueueName, 
+                    exchange, 
+                    routingKey);
             }
             else
             {
-                _channel.ExchangeDeclare(
+                _consumptionChannel.Channel.ExchangeDeclare(
                     exchange: exchange,
                     type: ExchangeType.Direct,
                     durable: false,
@@ -76,15 +102,15 @@ namespace Autobus.Transports.RabbitMQ
                 var queueName = GetServiceRequestQueueName(service);
                 if (!_serviceQueueRefs.TryGetValue(queueName, out var refs))
                 {
-                    var queue = _channel.QueueDeclare(
+                    _consumptionChannel.Channel.QueueDeclare(
                         queue: queueName,
                         durable: true,
                         exclusive: false,
                         autoDelete: false);
-                    _channel.BasicConsume(queue, false, _consumer);
+                    _consumptionChannel.Channel.BasicConsume(_consumptionChannel.Consumer, queueName, false);
                     _serviceQueueRefs[queueName] = 0;
                 }
-                _channel.QueueBind(queueName, exchange, routingKey);
+                _consumptionChannel.Channel.QueueBind(queueName, exchange, routingKey);
                 _serviceQueueRefs[queueName] = refs + 1;
             }
         }
@@ -92,12 +118,15 @@ namespace Autobus.Transports.RabbitMQ
         private void BindToEvent(IServiceContract service, MessageModel message)
         {
             var (exchange, routingKey) = GetRoutingInfo(service, message);
-            _channel.ExchangeDeclare(
+            _consumptionChannel.Channel.ExchangeDeclare(
                 exchange: exchange,
                 type: ExchangeType.Direct,
                 durable: false,
                 autoDelete: false);
-            _channel.QueueBind(_queueName, exchange, routingKey);
+            _consumptionChannel.Channel.QueueBind(
+                _consumptionChannel.QueueName, 
+                exchange, 
+                routingKey);
         }
         
         public override void UnbindFrom(IServiceContract service, MessageModel message)
@@ -115,7 +144,7 @@ namespace Autobus.Transports.RabbitMQ
             if (_config.UseConsistentHashing)
             {
                 var (exchange, routingKey) = GetRoutingInfo(service, message);
-                _channel.QueueUnbind(_queueName, exchange, routingKey);
+                _consumptionChannel.Channel.QueueUnbind(_consumptionChannel.QueueName, exchange, routingKey);
             }
             else
             {
@@ -123,9 +152,7 @@ namespace Autobus.Transports.RabbitMQ
                 var refs = _serviceQueueRefs[queueName] = _serviceQueueRefs[queueName] - 1;
                 if (refs == 0)
                 {
-                    _channel.QueueDelete(
-                        queue: queueName,
-                        ifUnused: true);
+                    // TODO: Stop consuming on the consumer tag we created
                     _serviceQueueRefs.Remove(queueName);
                 }
             }
@@ -134,38 +161,36 @@ namespace Autobus.Transports.RabbitMQ
         private void UnbindFromEvent(IServiceContract service, MessageModel message)
         {
             var (exchange, routingKey) = GetRoutingInfo(service, message);
-            _channel.QueueUnbind(_queueName, exchange, routingKey);
+            _consumptionChannel.Channel.QueueUnbind(
+                _consumptionChannel.QueueName, 
+                exchange, 
+                routingKey);
         }
 
         public override void Publish(IServiceContract service, MessageModel message, ReadOnlySpanOrMemory<byte> data)
         {
-            var props = _channel.CreateBasicProperties();
             // Have to make a memory allocation in case we were passed a span, rabbit mq is expecting memory
             var passableData = data.IsMemory ? data.Memory : data.Span.ToArray();
             var (exchange, routingKey) = GetRoutingInfo(service, message);
-            _channel.BasicPublish(exchange, routingKey, props, passableData);
+            _producerChannelPool.BasicPublish(exchange, routingKey, passableData);
         }
 
         public override void Publish(IServiceContract service, MessageModel message, ReadOnlySpanOrMemory<byte> data, ServiceRequestModel requestModel)
         {
-            var props = _channel.CreateBasicProperties();
-            props.ReplyTo = _queueName;
-            props.CorrelationId = requestModel.RequestId.ToString();
             // Have to make a memory allocation in case we were passed a span, rabbit mq is expecting memory
             var passableData = data.IsMemory ? data.Memory : data.Span.ToArray();
             var (exchange, routingKey) = GetRoutingInfo(service, message);
-            _channel.BasicPublish(exchange, routingKey, props, passableData);
+            _producerChannelPool.BasicPublish(exchange, routingKey, _replyChannel.QueueName, requestModel.RequestId, passableData);
         }
 
         public override void Publish(object sender, ReadOnlySpanOrMemory<byte> data)
         {
             if (!(sender is BasicDeliverEventArgs ea))
                 throw new Exception();
-            var props = _channel.CreateBasicProperties();
-            props.CorrelationId = ea.BasicProperties.CorrelationId;
             var replyAddress = ea.BasicProperties.ReplyTo;
+            var correlationId = int.Parse(ea.BasicProperties.CorrelationId);
             var passableData = data.IsMemory ? data.Memory : data.Span.ToArray();
-            _channel.BasicPublish("", replyAddress, props, passableData);
+            _producerChannelPool.BasicPublish(replyAddress, correlationId, passableData);
         }
 
         public override ServiceRequestModel CreateNewRequest(int requestId)
@@ -182,41 +207,41 @@ namespace Autobus.Transports.RabbitMQ
             return _pendingRequests.TryRemove(requestModel.RequestId, out _);
         }
 
-        private void OnIncomingPacket(object sender, BasicDeliverEventArgs ea)
+        private void OnIncomingResponse(object sender, BasicDeliverEventArgs ea)
         {
-            // Copy the body
-            var body = ea.Body.ToArray();
-            
             // If we have a correlation id we are dealing with a response.
             if (int.TryParse(ea.BasicProperties.CorrelationId, out var correlationId) &&
                 _pendingRequests.TryRemove(correlationId, out var requestModel))
             {
-                var responseModel = new ServiceResponseModel(body, ea);
-                requestModel.ResponseTask.SetResult(responseModel);
-                return;
+                var responseModel = new ServiceResponseModel(ea.Body.ToArray(), ea);
+                requestModel.CompletionSource.SetResult(responseModel);
             }
-
-            MessageHandler(ea.RoutingKey, body, ea);
+        }
+        
+        private void OnIncomingPacket(object sender, BasicDeliverEventArgs ea)
+        {
+            MessageHandler(ea.RoutingKey, ea.Body.ToArray(), ea);
         }
 
         public override void Dispose()
         {
-            _channel.Dispose();
-            _connection.Dispose();
+            //_channel.Dispose();
+            _consumingConnection.Dispose();
+            _producingConnection.Dispose();
         }
 
         public override void Acknowledge(object sender)
         {
             if (!(sender is BasicDeliverEventArgs ea))
                 throw new Exception();
-            _channel.BasicAck(ea.DeliveryTag, false);
+            _consumptionChannel.Channel.BasicAck(ea.DeliveryTag, false);
         }
 
         public override void Reject(object sender)
         {
             if (!(sender is BasicDeliverEventArgs ea))
                 throw new Exception();
-            _channel.BasicReject(ea.DeliveryTag, true);
+            _consumptionChannel.Channel.BasicReject(ea.DeliveryTag, true);
         }
 
         private static (string Exchange, string RoutingKey) GetRoutingInfo(IServiceContract service, MessageModel message) =>

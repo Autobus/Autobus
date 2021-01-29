@@ -6,5 +6,5 @@ using System.Threading.Tasks;
 
 namespace Autobus.Models
 {
-    public record ServiceRequestModel(int RequestId, TaskCompletionSource<ServiceResponseModel> ResponseTask);
+    public record ServiceRequestModel(int RequestId, TaskCompletionSource<ServiceResponseModel> CompletionSource);
 }

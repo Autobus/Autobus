@@ -32,10 +32,9 @@ namespace Autobus.Transports.RabbitMQ
         public BaseTransport Build()
         {
             _connectionFactory.AutomaticRecoveryEnabled = true;
-            var connection = _connectionFactory.CreateConnection();
-            var channel = connection.CreateModel();
-            var queueName = channel.QueueDeclare();
-            return new RabbitMQTransport(_config, connection, channel, queueName);
+            var producingConnection = _connectionFactory.CreateConnection();
+            var consumingConnection = _connectionFactory.CreateConnection();
+            return new RabbitMQTransport(_config, producingConnection, consumingConnection);
         }
     }
 }
