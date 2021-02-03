@@ -29,6 +29,12 @@ namespace Autobus.Transports.RabbitMQ
             return this;
         }
 
+        public RabbitMQTransportBuilder ConfigureProducerChannelPoolSize(int producerChannelPoolSize)
+        {
+            _config.ProducerChannelPoolSize = producerChannelPoolSize;
+            return this;
+        }
+
         public BaseTransport Build()
         {
             _connectionFactory.AutomaticRecoveryEnabled = true;

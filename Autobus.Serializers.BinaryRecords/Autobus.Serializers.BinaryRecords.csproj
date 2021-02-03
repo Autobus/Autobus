@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <PackageId>Autobus.Serializers.BinaryRecords</PackageId>
-    <Version>0.1.5</Version>
+    <Version>0.1.6</Version>
     <LangVersion>9</LangVersion>
     <TargetFramework>net5.0</TargetFramework>
 
@@ -18,7 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Autobus.Abstractions\Autobus.Abstractions.csproj" />
-    <PackageReference Include="BinaryRecords" Version="0.1.6" />
+    <PackageReference Include="BinaryRecords" Version="0.1.7" />
     <Content Include="../icon.png" PackagePath="" Visible="false" />
   </ItemGroup>
 

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <PackageId>Autobus</PackageId>
-    <Version>0.1.4</Version>
+    <Version>0.1.5</Version>
     <OutputType>Library</OutputType>
     <LangVersion>9</LangVersion>
     <TargetFramework>net5.0</TargetFramework>

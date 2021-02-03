@@ -114,15 +114,18 @@ namespace Autobus
         {
             Task.Run(async () =>
             {
+                var messageModel = _serviceRegistry.GetMessageModel(name);
                 try
                 {
                     await CallMessageHandler(name, data, sender);
-                    _transport.Acknowledge(sender);
+                    if (messageModel.Behavior is MessageBehavior.Request or MessageBehavior.Command)
+                        _transport.Acknowledge(sender);
                 }
                 catch (Exception e)
                 {
                     _logger.Error(e);
-                    _transport.Reject(sender);
+                    if (messageModel.Behavior is MessageBehavior.Request or MessageBehavior.Command)
+                        _transport.Reject(sender);
                 }
             });
         }

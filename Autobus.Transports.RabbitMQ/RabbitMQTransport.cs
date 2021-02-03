@@ -27,6 +27,8 @@ namespace Autobus.Transports.RabbitMQ
 
         private readonly (IModel Channel, string QueueName, ActionBasicConsumer Consumer) _consumptionChannel;
 
+        private readonly (IModel Channel, string QueueName, ActionBasicConsumer Consumer) _eventChannel;
+        
         private readonly (IModel Channel, string QueueName, ActionBasicConsumer Consumer) _replyChannel;
         
         public RabbitMQTransport(
@@ -36,17 +38,28 @@ namespace Autobus.Transports.RabbitMQ
         {
             _config = config;
             
-            // Setup our normal event and request consumption
+            // Setup our normal request and command consumption
             _consumingConnection = consumingConnection;
             var consumptionChannel = _consumingConnection.CreateModel();
             var consumptionQueue = consumptionChannel.QueueDeclare();
-            var messageConsumer = new ActionBasicConsumer(consumptionChannel)
+            var consumptionConsumer = new ActionBasicConsumer(consumptionChannel)
             {
                 Received = OnIncomingPacket
             };
-            //consumptionChannel.BasicQos(_config.PrefetchSize, _config.PrefetchCount, false);
-            consumptionChannel.BasicConsume(messageConsumer, consumptionQueue, autoAck: false);
-            _consumptionChannel = (consumptionChannel, consumptionQueue, messageConsumer);
+            if (_config.PrefetchSize != 0 || _config.PrefetchCount != 0)
+                consumptionChannel.BasicQos(_config.PrefetchSize, _config.PrefetchCount, false);
+            consumptionChannel.BasicConsume(consumptionConsumer, consumptionQueue, autoAck: false);
+            _consumptionChannel = (consumptionChannel, consumptionQueue, consumptionConsumer);
+            
+            // Setup our event consumption
+            var eventChannel = _consumingConnection.CreateModel();
+            var eventQueue = eventChannel.QueueDeclare();
+            var eventConsumer = new ActionBasicConsumer(eventChannel)
+            {
+                Received = OnIncomingPacket
+            };
+            eventChannel.BasicConsume(eventConsumer, eventQueue, autoAck: true);
+            _eventChannel = (eventChannel, eventQueue, eventConsumer);
             
             // Setup our reply consumption
             var replyChannel = _consumingConnection.CreateModel();
@@ -56,7 +69,6 @@ namespace Autobus.Transports.RabbitMQ
                 Received = OnIncomingResponse
             };
             replyChannel.BasicConsume(replyConsumer, replyQueue, autoAck: true);
-            Console.WriteLine($"Consuming replies on: {replyQueue.QueueName}");
             _replyChannel = (replyChannel, replyQueue, replyConsumer);
 
             // Setup our producing
@@ -118,13 +130,13 @@ namespace Autobus.Transports.RabbitMQ
         private void BindToEvent(IServiceContract service, MessageModel message)
         {
             var (exchange, routingKey) = GetRoutingInfo(service, message);
-            _consumptionChannel.Channel.ExchangeDeclare(
+            _eventChannel.Channel.ExchangeDeclare(
                 exchange: exchange,
                 type: ExchangeType.Direct,
                 durable: false,
                 autoDelete: false);
-            _consumptionChannel.Channel.QueueBind(
-                _consumptionChannel.QueueName, 
+            _eventChannel.Channel.QueueBind(
+                _eventChannel.QueueName, 
                 exchange, 
                 routingKey);
         }
@@ -161,8 +173,8 @@ namespace Autobus.Transports.RabbitMQ
         private void UnbindFromEvent(IServiceContract service, MessageModel message)
         {
             var (exchange, routingKey) = GetRoutingInfo(service, message);
-            _consumptionChannel.Channel.QueueUnbind(
-                _consumptionChannel.QueueName, 
+            _eventChannel.Channel.QueueUnbind(
+                _eventChannel.QueueName, 
                 exchange, 
                 routingKey);
         }
