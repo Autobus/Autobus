@@ -6,6 +6,8 @@ namespace Autobus.Abstractions
 {
     public interface ITransport : IDisposable
     {
+        void DeclareService(IServiceContract service);
+        
         void BindTo(IServiceContract service, MessageModel message);
 
         void UnbindFrom(IServiceContract service, MessageModel message);

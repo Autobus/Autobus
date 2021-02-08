@@ -11,6 +11,7 @@ namespace Autobus.Abstractions
 
         public void SetMessageHandler(MessageHandlerDelegate messageHandler) => MessageHandler = messageHandler;
 
+        public abstract void DeclareService(IServiceContract service);
         public abstract void BindTo(IServiceContract service, MessageModel message);
         public abstract ServiceRequestModel CreateNewRequest(int requestId);
         public abstract bool DiscardRequest(ServiceRequestModel requestModel);

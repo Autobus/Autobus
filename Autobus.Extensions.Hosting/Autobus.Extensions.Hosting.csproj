@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <PackageId>Autobus.Extensions.Hosting</PackageId>
-    <Version>0.1.3</Version>
+    <Version>0.1.4</Version>
     <OutputType>Library</OutputType>
     <TargetFramework>net5.0</TargetFramework>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>

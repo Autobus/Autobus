@@ -6,6 +6,7 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using Autobus.Enums;
 using Autobus.Models;
 
@@ -78,6 +79,33 @@ namespace Autobus.Transports.RabbitMQ
 
         private static string GetServiceRequestQueueName(IServiceContract service) => $"{service.Name}.Requests";
 
+        public override void DeclareService(IServiceContract service)
+        {
+            if (_config.UseConsistentHashing)
+            {
+                _consumptionChannel.Channel.ExchangeDeclare(
+                    exchange: GetServiceMessageExchange(service),
+                    type: "x-consistent-hash",
+                    durable: false,
+                    autoDelete: true,
+                    arguments: new Dictionary<string, object>() {["hash-header"] = "hash-on"});
+            }
+            else
+            {
+                _consumptionChannel.Channel.ExchangeDeclare(
+                    exchange: GetServiceMessageExchange(service),
+                    type: ExchangeType.Direct,
+                    durable: false,
+                    autoDelete: false);
+            }
+            if (service.Messages.Any(m => m.Behavior is MessageBehavior.Event))
+                _eventChannel.Channel.ExchangeDeclare(
+                    exchange: GetServiceEventExchange(service),
+                    type: ExchangeType.Direct,
+                    durable: false,
+                    autoDelete: false);
+        }
+
         public override void BindTo(IServiceContract service, MessageModel message)
         {
             if (message.Behavior is (MessageBehavior.Request or MessageBehavior.Command))
@@ -93,12 +121,6 @@ namespace Autobus.Transports.RabbitMQ
             var (exchange, routingKey) = GetRoutingInfo(service, message);
             if (_config.UseConsistentHashing)
             {
-                _consumptionChannel.Channel.ExchangeDeclare(
-                    exchange: exchange,
-                    type: "x-consistent-hash",
-                    durable: false,
-                    autoDelete: true,
-                    arguments: new Dictionary<string, object>() {["hash-header"] = "hash-on"});
                 _consumptionChannel.Channel.QueueBind(
                     _consumptionChannel.QueueName, 
                     exchange, 
@@ -106,11 +128,6 @@ namespace Autobus.Transports.RabbitMQ
             }
             else
             {
-                _consumptionChannel.Channel.ExchangeDeclare(
-                    exchange: exchange,
-                    type: ExchangeType.Direct,
-                    durable: false,
-                    autoDelete: false);
                 var queueName = GetServiceRequestQueueName(service);
                 if (!_serviceQueueRefs.TryGetValue(queueName, out var refs))
                 {
@@ -130,11 +147,6 @@ namespace Autobus.Transports.RabbitMQ
         private void BindToEvent(IServiceContract service, MessageModel message)
         {
             var (exchange, routingKey) = GetRoutingInfo(service, message);
-            _eventChannel.Channel.ExchangeDeclare(
-                exchange: exchange,
-                type: ExchangeType.Direct,
-                durable: false,
-                autoDelete: false);
             _eventChannel.Channel.QueueBind(
                 _eventChannel.QueueName, 
                 exchange, 
@@ -237,7 +249,7 @@ namespace Autobus.Transports.RabbitMQ
 
         public override void Dispose()
         {
-            //_channel.Dispose();
+            _producerChannelPool.Dispose();
             _consumingConnection.Dispose();
             _producingConnection.Dispose();
         }
@@ -256,11 +268,15 @@ namespace Autobus.Transports.RabbitMQ
             _consumptionChannel.Channel.BasicReject(ea.DeliveryTag, true);
         }
 
+        private static string GetServiceMessageExchange(IServiceContract services) => services.Name;
+
+        private static string GetServiceEventExchange(IServiceContract services) => $"{services.Name}.Events";
+        
         private static (string Exchange, string RoutingKey) GetRoutingInfo(IServiceContract service, MessageModel message) =>
             message.Behavior switch
             {
-                MessageBehavior.Request or MessageBehavior.Command => (service.Name, message.Name),
-                MessageBehavior.Event => ($"{service.Name}.Events", message.Name),
+                MessageBehavior.Request or MessageBehavior.Command => (GetServiceMessageExchange(service), message.Name),
+                MessageBehavior.Event => (GetServiceEventExchange(service), message.Name),
                 _ => throw new Exception($"Unroutable message: {message}")
             };
     }

@@ -50,6 +50,8 @@ namespace Autobus
             _serializationProvider = serializationProvider;
             _correlationIdProvider = correlationIdProvider;
             _transport = transport;
+            foreach (var service in _serviceRegistry.GetServiceContracts())
+                _transport.DeclareService(service);
         }
 
         public void Publish<TMessage>(TMessage message)
