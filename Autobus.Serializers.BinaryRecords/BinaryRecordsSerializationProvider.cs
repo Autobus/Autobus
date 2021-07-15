@@ -1,21 +1,15 @@
 ﻿using System;
-using BinaryRecords;
-using Autobus.Delegates;
 using Autobus.Abstractions;
+using Autobus.Delegates;
+using BinaryRecords;
 
 namespace Autobus.Serialization.BinaryRecords
 {
     public class BinaryRecordsSerializationProvider : ISerializationProvider
     {
-        private BinarySerializer _serializer;
-
-        public BinaryRecordsSerializationProvider(BinarySerializer serializer) =>_serializer = serializer;
-
-        public BinaryRecordsSerializationProvider() => _serializer = BinarySerializerBuilder.BuildDefault();
-
-        public T Deserialize<T>(ReadOnlyMemory<byte> data) => _serializer.Deserialize<T>(data.Span);
+        public T Deserialize<T>(ReadOnlyMemory<byte> data) => BinarySerializer.Deserialize<T>(data.Span);
 
         public void Serialize<TMessage, TState>(TMessage message, TState state, OnSerializedDelegate<TState> onSerialized) =>
-            _serializer.Serialize(message, (state, onSerialized), (data, state) => state.onSerialized(data, state.state));
+            BinarySerializer.Serialize(message, (state, onSerialized), (data, state) => state.onSerialized(data, state.state));
     }
 }
