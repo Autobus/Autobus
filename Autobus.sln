@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30804.86
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31717.71
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Autobus", "Autobus\Autobus.csproj", "{DBC6225B-C559-4321-896A-D5DA95F72157}"
 EndProject
@@ -11,9 +11,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Autobus.Transports.RabbitMQ
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Autobus.Extensions.Hosting", "Autobus.Extensions.Hosting\Autobus.Extensions.Hosting.csproj", "{30DB540A-6E68-4416-BC62-12C36F09CF98}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Autobus.Abstractions", "Autobus.Abstractions\Autobus.Abstractions.csproj", "{4406903E-60A4-4177-A7FD-248C7AFCACB4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Autobus.Abstractions", "Autobus.Abstractions\Autobus.Abstractions.csproj", "{4406903E-60A4-4177-A7FD-248C7AFCACB4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Autobus.Loggers.Serilog", "Autobus.Loggers.Serilog\Autobus.Loggers.Serilog.csproj", "{AD37693B-8165-441B-A926-9A739D989B8F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Autobus.Loggers.Serilog", "Autobus.Loggers.Serilog\Autobus.Loggers.Serilog.csproj", "{AD37693B-8165-441B-A926-9A739D989B8F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Autobus.Serializers.Json", "Autobus.Serializers.Json\Autobus.Serializers.Json.csproj", "{2B19A359-D3CD-461F-83FA-6BB3CDE70902}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{AD37693B-8165-441B-A926-9A739D989B8F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AD37693B-8165-441B-A926-9A739D989B8F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AD37693B-8165-441B-A926-9A739D989B8F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2B19A359-D3CD-461F-83FA-6BB3CDE70902}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B19A359-D3CD-461F-83FA-6BB3CDE70902}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B19A359-D3CD-461F-83FA-6BB3CDE70902}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B19A359-D3CD-461F-83FA-6BB3CDE70902}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

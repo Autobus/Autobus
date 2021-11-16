@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>Autobus.Serializers.Json</PackageId>
+    <Version>0.2.0</Version>
+    <LangVersion>9</LangVersion>
+    <TargetFramework>net5.0</TargetFramework>
+
+    <Authors>Chandler Stowell</Authors>
+    <PackageDescription>Autobus Json Serialization</PackageDescription>
+    <PackageTags></PackageTags>
+    <RepositoryUrl>https://github.com/Autobus.Serializers/Autobus.Serializers.git</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/Autobus.Serializers/Autobus.Serializers</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/Autobus.Serializers/Autobus.Serializers/blob/main/LICENSE</PackageLicenseUrl>
+    <copyright>Copyright 2021</copyright>
+    <PackageIcon>icon.png</PackageIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Autobus.Abstractions\Autobus.Abstractions.csproj" />
+    <Content Include="../icon.png" PackagePath="" Visible="false" />
+  </ItemGroup>
+
+</Project>
