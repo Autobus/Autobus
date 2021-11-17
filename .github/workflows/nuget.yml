@@ -25,6 +25,7 @@ jobs:
           dotnet pack -c Release --output nupkgs Autobus/Autobus.csproj
           dotnet pack -c Release --output nupkgs Autobus.Extensions.Hosting/Autobus.Extensions.Hosting.csproj
           dotnet pack -c Release --output nupkgs Autobus.Serializers.BinaryRecords/Autobus.Serializers.BinaryRecords.csproj
+          dotnet pack -c Release --output nupkgs Autobus.Serializers.Json/Autobus.Serializers.Json.csproj
           dotnet pack -c Release --output nupkgs Autobus.Transports.RabbitMQ/Autobus.Transports.RabbitMQ.csproj
           dotnet pack -c Release --output nupkgs Autobus.Loggers.Serilog/Autobus.Loggers.Serilog.csproj
       - name: Publish
